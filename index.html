@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>정보 교과서 퀴즈 웹앱</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+
+        #quiz-container {
+            width: 90%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .question {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            min-height: 80px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+        }
+
+        /* 터치 및 마우스 호버 효과 */
+        .option:active, .option:hover {
+            background-color: #f0f7ff;
+            border-color: var(--primary-color);
+        }
+
+        .option.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-next {
+            margin-top: 30px;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: none;
+            cursor: pointer;
+        }
+
+        #result-screen {
+            text-align: center;
+            display: none;
+        }
+
+        .score-text {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="quiz-screen">
+        <div class="header">
+            <span id="progress">문제 1/10</span>
+            <span id="score-display">점수: 0</span>
+        </div>
+        <div class="question" id="question-text">질문이 로드되는 중입니다...</div>
+        <div class="options" id="options-container"></div>
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()">다음 문제</button>
+    </div>
+
+    <div id="result-screen">
+        <h2>퀴즈 완료!</h2>
+        <div class="score-text" id="final-score">0점</div>
+        <p id="result-msg"></p>
+        <button class="btn-next" style="display:block" onclick="location.reload()">다시 시작하기</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "소프트웨어와 하드웨어가 결합하여 문제 해결에 활용되는 장치는?", a: ["컴퓨팅 시스템", "운영 체제", "응용 프로그램", "인터페이스", "메모리"], c: 0 },
+        { q: "모니터, 프린터와 같이 처리된 결과를 제공하는 장치는?", a: ["입력 장치", "처리 장치", "기억 장치", "출력 장치", "통신 장치"], c: 3 },
+        { q: "사용자와 하드웨어 사이에서 중개 역할을 하는 소프트웨어는?", a: ["문서 작성 앱", "웹 브라우저", "운영 체제(OS)", "백신 프로그램", "그림판"], c: 2 },
+        { q: "센서로 환경을 감지하고 물리적 세계와 상호 작용하는 장치는?", a: ["가상 현실", "피지컬 컴퓨팅", "클라우드", "블록체인", "보안 시스템"], c: 1 },
+        { q: "주변의 밝기를 측정하여 0~255 사이의 값을 반환하는 센서는?", a: ["온도 센서", "가속도 센서", "빛 감지 센서", "초음파 센서", "자기 센서"], c: 2 },
+        { q: "전기 신호를 물리적 동작(회전, 빛 등)으로 바꾸는 장치는?", a: ["센서", "액추에이터", "컨트롤러", "저항", "CPU"], c: 1 },
+        { q: "물체의 기울기나 흔들림, 충격을 감지하는 센서는?", a: ["터치 센서", "가속도 센서", "소리 센서", "거리 센서", "습도 센서"], c: 1 },
+        { q: "박쥐처럼 초음파를 이용해 물체와의 거리를 재는 센서는?", a: ["자기 센서", "초음파 센서", "온도 센서", "조도 센서", "적외선 센서"], c: 1 },
+        { q: "다음 중 운영 체제의 기능이 아닌 것은?", a: ["메모리 관리", "입출력 관리", "하드웨어 직접 제조", "앱 실행 관리", "인터페이스 제공"], c: 2 },
+        { q: "시스템과 사용자 간의 소통 방식이나 접점을 뜻하는 용어는?", a: ["네트워킹", "인터페이스", "데이터베이스", "알고리즘", "인코딩"], c: 1 }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const qData = questions[currentIdx];
+        document.getElementById("question-text").innerText = qData.q;
+        document.getElementById("progress").innerText = `문제 ${currentIdx + 1}/${questions.length}`;
+        
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        document.getElementById("next-btn").style.display = "none";
+
+        qData.a.forEach((text, i) => {
+            const div = document.createElement("div");
+            div.className = "option";
+            div.innerText = text;
+            div.onclick = () => selectOption(i, div);
+            container.appendChild(div);
+        });
+    }
+
+    function selectOption(idx, el) {
+        const allOptions = document.querySelectorAll(".option");
+        allOptions.forEach(opt => opt.classList.remove("selected"));
+        el.classList.add("selected");
+        
+        // 정답 체크 (선택 즉시 점수 반영 로직은 생략하고 '다음' 클릭 시 처리 가능하나 여기선 시각적 피드백 위주)
+        document.getElementById("next-btn").style.display = "block";
+        el.dataset.chosen = idx;
+    }
+
+    function nextQuestion() {
+        const selected = document.querySelector(".option.selected");
+        const chosenIdx = parseInt(selected.dataset.chosen);
+        
+        if (chosenIdx === questions[currentIdx].c) {
+            score += 10;
+        }
+
+        currentIdx++;
+        document.getElementById("score-display").innerText = `점수: ${score}`;
+
+        if (currentIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById("quiz-screen").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("final-score").innerText = score + "점";
+        
+        let msg = score >= 80 ? "훌륭합니다! 완벽히 이해하셨네요." : "조금 더 복습해볼까요?";
+        document.getElementById("result-msg").innerText = msg;
+    }
+
+    // 초기 로드
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
