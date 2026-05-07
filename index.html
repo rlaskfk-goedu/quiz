@@ -2,265 +2,380 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>정보 교과서 퀴즈 웹앱</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중학 정보 퀴즈 시스템</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <!-- Babel CDN for JSX support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --correct-color: #2ecc71;
-            --wrong-color: #e74c3c;
-            --bg-color: #f5f7fa;
-            --card-bg: #ffffff;
-            --text-color: #333;
-        }
-
-        body {
-            font-family: 'Pretendard', -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            touch-action: manipulation;
-        }
-
-        /* 메인 레이아웃 (PC에서 가로 배치) */
-        .main-wrapper {
-            display: flex;
-            gap: 20px;
-            width: 95%;
-            max-width: 800px;
-            margin-top: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        /* 퀴즈 박스 */
-        #quiz-container {
-            flex: 1;
-            min-width: 300px;
-            max-width: 500px;
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        /* 우측 문제 리스트 */
-        #status-sidebar {
-            width: 150px;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            height: fit-content;
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: #f8f9fa;
-            font-weight: bold;
-            border: 1px solid #eee;
-        }
-
-        .status-item.current { border: 2px solid var(--primary-color); background: #eef6ff; }
-        .status-item.correct { color: var(--correct-color); }
-        .status-item.wrong { color: var(--wrong-color); }
-
-        /* 퀴즈 본문 스타일 */
-        .header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--primary-color); }
-        .question { font-size: 1.15rem; line-height: 1.5; margin-bottom: 10px; font-weight: 600; }
-        
-        .hint-container { margin-bottom: 20px; }
-        .btn-hint { background: none; border: 1px solid #ddd; color: #888; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-        .hint-box { display: none; background: #fff9db; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-top: 10px; border-left: 4px solid #fcc419; }
-
-        .options { display: flex; flex-direction: column; gap: 10px; }
-        .option { padding: 14px; border: 2px solid #eee; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
-        .option.correct { background-color: var(--correct-color) !important; color: white; border-color: var(--correct-color); }
-        .option.wrong { background-color: var(--wrong-color) !important; color: white; border-color: var(--wrong-color); }
-
-        #explanation-box { margin-top: 20px; padding: 15px; background: #f1f3f5; border-radius: 10px; display: none; font-size: 0.9rem; }
-        .btn-next { margin-top: 20px; width: 100%; padding: 15px; background-color: var(--primary-color); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; display: none; cursor: pointer; }
-
-        #result-screen { text-align: center; display: none; padding: 20px; }
-        footer { text-align: center; font-size: 0.85rem; color: #777; padding: 20px; }
-
-        @media (max-width: 600px) {
-            .main-wrapper { flex-direction: column; align-items: center; }
-            #status-sidebar { width: 90%; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 10px; }
-            .status-item { padding: 5px 8px; font-size: 0.8rem; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
+        .animate-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-50">
+    <div id="root"></div>
 
-<div class="main-wrapper">
-    <div id="quiz-container">
-        <div id="quiz-screen">
-            <div class="header">
-                <span id="progress">문제 1/10</span>
-                <span id="score-display">점수: 0</span>
-            </div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        // 구글 앱스 스크립트 웹 앱 URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGRO2SKyfnKWnbRtRgCadQi1VfTs0KKgJqy929uVaI3TViitxixA2jqx7lcLJbpAGDWA/exec";
+
+        const quizData = [
+            {
+                q: "소프트웨어와 하드웨어가 유기적으로 결합하여 문제 해결에 활용되는 장치를 무엇이라 합니까?",
+                options: ["응용 프로그램", "운영 체제", "컴퓨팅 시스템", "인터페이스", "데이터베이스"],
+                correct: 2,
+                hint: "HW와 SW가 합쳐진 전체적인 체계를 뜻합니다.",
+                exp: "컴퓨팅 시스템은 소프트웨어와 하드웨어가 유기적으로 결합하여 문제 해결에 활용되는 장치를 말합니다."
+            },
+            {
+                q: "하나의 반도체 칩에 CPU, GPU 등 여러 주요 구성 요소를 통합한 칩을 무엇이라 합니까?",
+                options: ["RAM", "SSD", "SoC(System on Chip)", "HDD", "Mainboard"],
+                correct: 2,
+                hint: "스마트폰에서 주로 사용되는 통합 칩입니다.",
+                exp: "SoC는 하나의 반도체에 주요 구성 요소를 통합한 칩으로 스마트 기기에서 핵심 역할을 합니다."
+            },
+            {
+                q: "외부의 데이터를 입력받는 장치로만 짝지어진 것은?",
+                options: ["모니터, 프린터", "웹캠, 마우스", "스피커, 모니터", "프로젝터, 키보드", "프린터, 마이크"],
+                correct: 1,
+                hint: "사용자의 명령이나 데이터를 안으로 넣어주는 장치입니다.",
+                exp: "웹캠, 마우스, 키보드, 마이크 등은 대표적인 입력 장치입니다."
+            },
+            {
+                q: "하드웨어를 관리하고 응용 소프트웨어가 동작할 수 있는 환경을 제공하는 프로그램은?",
+                options: ["그림판", "엑셀", "웹 브라우저", "운영 체제(OS)", "메신저 앱"],
+                correct: 3,
+                hint: "Windows, Android, iOS 등이 여기에 해당합니다.",
+                exp: "운영 체제는 하드웨어를 관리하고 사용자가 앱을 쓸 수 있도록 돕는 기본 소프트웨어입니다."
+            },
+            {
+                q: "센서로 환경 변화를 감지하고 소프트웨어로 제어하여 물리적 환경과 상호 작용하는 장치는?",
+                options: ["가상 현실 시스템", "피지컬 컴퓨팅 시스템", "클라우드 컴퓨팅", "블록체인 시스템", "데이터 마이닝"],
+                correct: 1,
+                hint: "현실(Physical) 세계와 소통하는 컴퓨팅입니다.",
+                exp: "센서로 주변 상황을 감지하고 액추에이터로 물리적 반응을 일으키는 것이 피지컬 컴퓨팅의 핵심입니다."
+            },
+            {
+                q: "마이크로비트의 구성 요소 중 주변 빛의 밝기를 측정(0~255)하는 센서는?",
+                options: ["온도 센서", "가속도 센서", "빛 감지 센서", "자기 센서", "소리 센서"],
+                correct: 2,
+                hint: "LED 스크린이 이 센서 역할도 함께 수행합니다.",
+                exp: "마이크로비트 앞면의 LED 판은 빛을 감지하는 센서 역할도 합니다."
+            },
+            {
+                q: "물체의 가속도나 충격의 세기를 측정하여 흔들림을 감지하는 센서는?",
+                options: ["가속도 센서", "초음파 센서", "자기 센서", "온도 센서", "터치 센서"],
+                correct: 0,
+                hint: "만보기 앱에서 걸음 수를 측정할 때 사용됩니다.",
+                exp: "가속도 센서는 물체의 움직임 상태를 감지하여 자동차, 로봇 등에 널리 쓰입니다."
+            },
+            {
+                q: "초음파를 발사하여 돌아오는 시간을 측정함으로써 거리를 계산하는 센서는?",
+                options: ["빛 감지 센서", "초음파 센서", "습도 센서", "소리 센서", "압력 센서"],
+                correct: 1,
+                hint: "주차 보조 시스템에서 장애물 거리를 잴 때 쓰입니다.",
+                exp: "초음파 센서는 수cm에서 수m까지의 거리를 측정할 수 있습니다."
+            },
+            {
+                q: "전기 에너지를 빛, 소리, 회전 등 물리적 동작으로 변환하는 출력 장치를 무엇이라 합니까?",
+                options: ["센서", "메모리", "액추에이터", "프로세서", "인터페이스"],
+                correct: 2,
+                hint: "모터나 LED 등이 대표적입니다.",
+                exp: "액추에이터는 제어 장치의 신호에 따라 물리적인 동작을 수행하는 장치입니다."
+            },
+            {
+                q: "컴퓨팅 시스템의 동작 원리 순서로 가장 적절한 것은?",
+                options: ["출력-처리-입력", "입력-처리-출력", "처리-입력-출력", "입력-출력-처리", "출력-입력-처리"],
+                correct: 1,
+                hint: "데이터가 들어가서(Input) 연산되고(Process) 나옵니다(Output).",
+                exp: "일반적인 컴퓨팅 시스템은 데이터를 입력받아 처리한 후 결과를 출력하는 과정을 거칩니다."
+            }
+        ];
+
+        const Icons = {
+            Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
+            X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Hint: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>,
+            ArrowRight: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        };
+
+        function App() {
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [score, setScore] = useState(0);
+            const [answered, setAnswered] = useState(false);
+            const [selectedIdx, setSelectedIdx] = useState(null);
+            const [showHint, setShowHint] = useState(false);
+            const [status, setStatus] = useState(Array(10).fill(null));
+            const [isFinished, setIsFinished] = useState(false);
             
-            <div class="question" id="question-text"></div>
-            
-            <div class="hint-container">
-                <button class="btn-hint" id="hint-btn" onclick="toggleHint()">🔍 힌트 보기</button>
-                <div class="hint-box" id="hint-text"></div>
-            </div>
-            
-            <div class="options" id="options-container"></div>
-            
-            <div id="explanation-box">
-                <strong>💡 정답 해설:</strong> <br>
-                <span id="explanation-text"></span>
-            </div>
+            const [studentId, setStudentId] = useState("");
+            const [studentName, setStudentName] = useState("");
+            const [isSubmitted, setIsSubmitted] = useState(false);
+            const [loading, setLoading] = useState(false);
 
-            <button class="btn-next" id="next-btn" onclick="nextQuestion()">다음 문제로</button>
-        </div>
+            const handleSelect = (idx) => {
+                if (answered) return;
+                
+                setAnswered(true);
+                setSelectedIdx(idx);
+                
+                const isCorrect = idx === quizData[currentIdx].correct;
+                const newStatus = [...status];
+                newStatus[currentIdx] = isCorrect ? 'O' : 'X';
+                setStatus(newStatus);
 
-        <div id="result-screen">
-            <h2>퀴즈 완료!</h2>
-            <div style="font-size: 3rem; color: var(--primary-color); margin: 20px 0;" id="final-score">0점</div>
-            <p id="result-msg"></p>
-            <button class="btn-next" style="display:block" onclick="location.reload()">다시 시작하기</button>
-        </div>
-    </div>
+                if (isCorrect) {
+                    setScore(prev => prev + 10);
+                }
+            };
 
-    <div id="status-sidebar">
-        <div style="text-align:center; font-size: 0.9rem; margin-bottom: 5px; color: #555; width: 100%;">진행 상황</div>
-        </div>
-</div>
+            const nextQuestion = () => {
+                if (currentIdx < quizData.length - 1) {
+                    setCurrentIdx(currentIdx + 1);
+                    setAnswered(false);
+                    setSelectedIdx(null);
+                    setShowHint(false);
+                } else {
+                    setIsFinished(true);
+                }
+            };
 
-<footer>
-    2026 baegot middle school - Developed by Kim Nara
-</footer>
+            const submitToSheet = async () => {
+                if (!studentId || !studentName) {
+                    alert("학번과 이름을 모두 입력해주세요.");
+                    return;
+                }
 
-<script>
-    const questions = [
-        { q: "소프트웨어와 하드웨어가 유기적으로 결합하여 문제 해결에 활용되는 장치를 무엇이라고 합니까?", a: ["컴퓨팅 시스템", "운영 체제", "응용 프로그램", "인터페이스", "중앙 처리 장치"], c: 0, hint: "하드웨어와 소프트웨어가 합쳐진 전체적인 시스템을 말합니다.", exp: "소프트웨어와 하드웨어가 결합하여 문제를 해결하는 전체 체계를 의미합니다." },
-        { q: "컴퓨팅 시스템의 하드웨어 구성 요소 중 처리된 결과를 사용자에게 보여주는 장치는?", a: ["입력 장치", "처리 장치", "기억 장치", "출력 장치", "통신 장치"], c: 3, hint: "모니터나 프린터가 이 범주에 속합니다.", exp: "모니터, 스피커 등 처리 결과를 사용자에게 제공하는 장치가 출력 장치입니다." },
-        { q: "사용자와 하드웨어 사이에서 중개 역할을 하는 시스템 소프트웨어는?", a: ["문서 작성 프로그램", "웹 브라우저", "운영 체제(OS)", "데이터베이스", "컴파일러"], c: 2, hint: "Windows, Android, iOS 등이 여기에 해당합니다.", exp: "운영 체제는 하드웨어를 관리하고 사용자가 앱을 쓸 수 있도록 돕는 기본 소프트웨어입니다." },
-        { q: "센서로 주변 환경 변화를 감지하고 소프트웨어로 제어하여 물리적 환경과 상호 작용하는 장치는?", a: ["가상 현실 시스템", "피지컬 컴퓨팅 시스템", "클라우드 시스템", "인공지능 시스템", "사이버 보안 시스템"], c: 1, hint: "스마트 화분이나 로봇 등이 대표적인 사례입니다.", exp: "센서와 액추에이터를 통해 현실 세계와 직접 소통하는 시스템을 피지컬 컴퓨팅이라고 합니다." },
-        { q: "마이크로비트 구성 요소 중 주변의 밝기를 측정하여 값을 알려주는 센서는?", a: ["온도 센서", "가속도 센서", "빛 감지 센서", "초음파 센서", "자기 센서"], c: 2, hint: "어두운 밤이나 밝은 낮을 구분할 때 사용합니다.", exp: "빛 감지 센서는 주변 빛의 양을 감지하여 수치화합니다." },
-        { q: "전기적 신호를 빛이나 회전 등의 물리적 변화로 나타내는 출력 장치는?", a: ["센서", "액추에이터", "컨트롤러", "어댑터", "커넥터"], c: 1, hint: "모터, LED, 스피커 등이 이 종류에 속합니다.", exp: "모터나 LED 등 전기적 신호를 물리적 동작으로 변환하는 장치를 액추에이터라고 합니다." },
-        { q: "물체의 가속도나 충격의 세기를 측정하여 흔들림이나 기울기를 감지하는 센서는?", a: ["터치 센서", "가속도 센서", "소리 센서", "거리 센서", "온도 센서"], c: 1, hint: "운동 횟수를 측정하는 만보기 기능을 구현할 때 유용합니다.", exp: "가속도 센서는 물체의 움직임 상태나 충격을 감지하는 데 사용됩니다." },
-        { q: "자동차 주차 시 거리를 측정하여 충돌을 방지할 때 주로 사용하는 센서는?", a: ["자기 센서", "초음파 센서", "온도 센서", "빛 감지 센서", "가속도 센서"], c: 1, hint: "박쥐가 거리를 재는 방식과 유사한 센서입니다.", exp: "초음파를 발사하고 돌아오는 시간을 측정하여 거리를 계산하는 것이 초음파 센서입니다." },
-        { q: "다음 중 운영 체제(OS)의 기능으로 옳지 않은 것은?", a: ["입출력 관리", "메모리 관리", "사용자 인터페이스 제공", "하드웨어 직접 제작", "앱 실행 관리"], c: 3, hint: "운영 체제는 장치를 만드는 것이 아니라 '관리'하는 소프트웨어입니다.", exp: "하드웨어 제작은 제조사의 역할이며, 운영 체제는 이를 관리하는 소프트웨어입니다." },
-        { q: "하드웨어와 소프트웨어를 연결하여 사용자가 상호 작용하는 방법을 무엇이라고 합니까?", a: ["네트워킹", "인터페이스", "프로그래밍", "데이터베이스", "알고리즘"], c: 1, hint: "터치 스크린 방식이나 음성 인식 방식 등 소통 창구를 의미합니다.", exp: "사용자와 시스템 간의 접점이자 소통 방식을 인터페이스라고 합니다." }
-    ];
+                setLoading(true);
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentId,
+                            name: studentName,
+                            score
+                        })
+                    });
+                    
+                    setTimeout(() => {
+                        setIsSubmitted(true);
+                        setLoading(false);
+                    }, 800);
+                } catch (error) {
+                    console.error(error);
+                    alert("전송 중 오류가 발생했습니다.");
+                    setLoading(false);
+                }
+            };
 
-    let currentIdx = 0;
-    let score = 0;
-    let answered = false;
+            if (isFinished) {
+                return (
+                    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+                        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center border border-slate-100">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-2">퀴즈 결과</h2>
+                            <div className="text-6xl font-black text-blue-600 my-6">{score}점</div>
+                            
+                            {score >= 50 && !isSubmitted ? (
+                                <div className="space-y-4 border-t pt-6 text-left">
+                                    <p className="text-sm text-blue-600 font-bold bg-blue-50 p-3 rounded-lg text-center mb-4">
+                                        🎉 50점 이상입니다! 구글 시트에 기록할 수 있습니다.
+                                    </p>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">학번</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="예: 10101"
+                                            className="w-full p-3 border-2 border-slate-100 rounded-xl focus:border-blue-400 outline-none transition-all"
+                                            value={studentId}
+                                            onChange={(e) => setStudentId(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">이름</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="예: 홍길동"
+                                            className="w-full p-3 border-2 border-slate-100 rounded-xl focus:border-blue-400 outline-none transition-all"
+                                            value={studentName}
+                                            onChange={(e) => setStudentName(e.target.value)}
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={submitToSheet}
+                                        disabled={loading}
+                                        className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors disabled:bg-slate-300 shadow-lg shadow-blue-200"
+                                    >
+                                        {loading ? "전송 중..." : "구글 시트에 기록하기"}
+                                    </button>
+                                </div>
+                            ) : isSubmitted ? (
+                                <div className="py-10 animate-in">
+                                    <div className="flex justify-center mb-4 text-green-500"><Icons.Check /></div>
+                                    <p className="text-green-600 font-bold text-lg">성공적으로 기록되었습니다!</p>
+                                    <p className="text-slate-400 text-sm mt-2">수업에 참여해 주셔서 감사합니다.</p>
+                                </div>
+                            ) : (
+                                <div className="py-6 space-y-4">
+                                    <p className="text-slate-500">아쉽게도 기록 가능 점수(50점)에 미치지 못했습니다.</p>
+                                    <button 
+                                        onClick={() => window.location.reload()}
+                                        className="w-full bg-slate-800 text-white p-4 rounded-xl font-bold hover:bg-slate-900 transition-colors"
+                                    >
+                                        다시 도전하기
+                                    </button>
+                                </div>
+                            )}
 
-    // 사이드바 생성
-    function createSidebar() {
-        const sidebar = document.getElementById("status-sidebar");
-        for (let i = 0; i < questions.length; i++) {
-            const item = document.createElement("div");
-            item.className = "status-item";
-            item.id = `status-${i}`;
-            item.innerHTML = `<span>${i + 1}번</span> <span class="mark">-</span>`;
-            sidebar.appendChild(item);
+                            <footer className="mt-12 text-[10px] text-slate-300 uppercase tracking-widest">
+                                2026 baegot middle school - Developed by Kim Nara
+                            </footer>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center py-6 px-4 font-sans">
+                    <div className="w-full max-w-5xl flex flex-col md:flex-row gap-6">
+                        
+                        {/* 메인 퀴즈 카드 */}
+                        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 relative">
+                            <div className="flex justify-between items-center mb-8">
+                                <span className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">
+                                    Question {currentIdx + 1} / 10
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Score</span>
+                                    <span className="text-blue-600 text-xl font-black">{score}</span>
+                                </div>
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-slate-800 leading-tight mb-6">
+                                {quizData[currentIdx].q}
+                            </h3>
+
+                            <div className="mb-8">
+                                <button 
+                                    onClick={() => setShowHint(!showHint)}
+                                    className="flex items-center gap-1.5 text-xs text-amber-500 font-bold hover:text-amber-600 transition-all bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100"
+                                >
+                                    <Icons.Hint />
+                                    {showHint ? "HINT CLOSE" : "HINT OPEN"}
+                                </button>
+                                {showHint && (
+                                    <div className="mt-3 bg-amber-50 border-l-4 border-amber-400 p-4 text-sm text-amber-900 rounded-r-xl animate-in">
+                                        {quizData[currentIdx].hint}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-3">
+                                {quizData[currentIdx].options.map((choice, i) => {
+                                    let style = "border-slate-100 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-slate-100";
+                                    if (answered) {
+                                        if (i === quizData[currentIdx].correct) style = "bg-green-500 text-white border-green-500 shadow-md scale-[1.02]";
+                                        else if (i === selectedIdx) style = "bg-red-500 text-white border-red-500 shadow-md";
+                                        else style = "opacity-40 border-slate-100 bg-slate-50";
+                                    }
+
+                                    return (
+                                        <button
+                                            key={i}
+                                            disabled={answered}
+                                            onClick={() => handleSelect(i)}
+                                            className={`w-full p-5 text-left rounded-2xl border-2 transition-all font-semibold flex items-center justify-between group ${style}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs border ${answered ? 'border-white/30' : 'border-slate-200 bg-white text-slate-400 group-hover:border-blue-300 group-hover:text-blue-500'}`}>
+                                                    {i + 1}
+                                                </span>
+                                                <span>{choice}</span>
+                                            </div>
+                                            {answered && i === quizData[currentIdx].correct && <Icons.Check />}
+                                            {answered && i === selectedIdx && i !== quizData[currentIdx].correct && <Icons.X />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {answered && (
+                                <div className="mt-8 bg-slate-50 border border-slate-100 rounded-2xl p-6 animate-in">
+                                    <div className="flex items-center gap-2 mb-3 text-slate-400">
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Feedback</span>
+                                        <div className="h-[1px] flex-1 bg-slate-200"></div>
+                                    </div>
+                                    <p className="text-slate-600 leading-relaxed font-medium mb-6">
+                                        {quizData[currentIdx].exp}
+                                    </p>
+                                    <button 
+                                        onClick={nextQuestion}
+                                        className="w-full bg-slate-900 text-white p-5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-[0.98]"
+                                    >
+                                        {currentIdx === quizData.length - 1 ? "FINISH QUIZ" : "NEXT QUESTION"}
+                                        <Icons.ArrowRight />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 우측 진행 리스트 */}
+                        <div className="w-full md:w-56 space-y-4">
+                            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                                <h4 className="text-[10px] font-black text-slate-300 uppercase mb-6 tracking-[0.2em] text-center">Progress Board</h4>
+                                <div className="grid grid-cols-5 md:grid-cols-2 gap-3">
+                                    {status.map((s, i) => (
+                                        <div 
+                                            key={i}
+                                            className={`h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-black border-2 transition-all
+                                                ${currentIdx === i ? "border-blue-500 bg-blue-50 text-blue-600 scale-110 z-10 shadow-sm" : 
+                                                    s === 'O' ? "border-green-100 bg-green-50 text-green-500" :
+                                                    s === 'X' ? "border-red-100 bg-red-50 text-red-500" :
+                                                    "border-transparent bg-slate-50 text-slate-300"}
+                                            `}
+                                        >
+                                            <span className="opacity-40 mb-1">{i + 1}</span>
+                                            <span className="text-base">
+                                                {s === 'O' ? "O" : s === 'X' ? "X" : "-"}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="bg-slate-900 rounded-3xl p-6 text-white overflow-hidden relative">
+                                <div className="relative z-10">
+                                    <p className="text-[10px] font-bold opacity-50 mb-1">CURRENT STATUS</p>
+                                    <p className="text-sm font-bold">{currentIdx + 1} / 10 Completed</p>
+                                </div>
+                                <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                                    <Icons.Check />
+                                </div>
+                            </div>
+
+                            <footer className="hidden md:block text-center py-4 text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-loose">
+                                baegot middle school<br/>Information Class<br/>© 2026
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            );
         }
-    }
 
-    function loadQuestion() {
-        answered = false;
-        const qData = questions[currentIdx];
-        
-        document.getElementById("question-text").innerText = qData.q;
-        document.getElementById("hint-text").innerText = qData.hint;
-        document.getElementById("hint-text").style.display = "none";
-        document.getElementById("hint-btn").innerText = "🔍 힌트 보기";
-        document.getElementById("progress").innerText = `문제 ${currentIdx + 1}/${questions.length}`;
-        
-        // 사이드바 현재 위치 표시
-        document.querySelectorAll(".status-item").forEach(el => el.classList.remove("current"));
-        document.getElementById(`status-${currentIdx}`).classList.add("current");
-
-        const container = document.getElementById("options-container");
-        container.innerHTML = "";
-        document.getElementById("next-btn").style.display = "none";
-        document.getElementById("explanation-box").style.display = "none";
-
-        qData.a.forEach((text, i) => {
-            const div = document.createElement("div");
-            div.className = "option";
-            div.innerText = `${i+1}. ${text}`;
-            div.onclick = () => selectOption(i, div);
-            container.appendChild(div);
-        });
-    }
-
-    function toggleHint() {
-        const hintBox = document.getElementById("hint-text");
-        const hintBtn = document.getElementById("hint-btn");
-        if (hintBox.style.display === "none") {
-            hintBox.style.display = "block";
-            hintBtn.innerText = "닫기";
-        } else {
-            hintBox.style.display = "none";
-            hintBtn.innerText = "🔍 힌트 보기";
-        }
-    }
-
-    function selectOption(idx, el) {
-        if(answered) return; 
-        answered = true;
-        const qData = questions[currentIdx];
-        const allOptions = document.querySelectorAll(".option");
-        const statusItem = document.getElementById(`status-${currentIdx}`);
-        
-        if (idx === qData.c) {
-            el.classList.add("correct");
-            score += 10;
-            statusItem.classList.add("correct");
-            statusItem.querySelector(".mark").innerText = "O";
-        } else {
-            el.classList.add("wrong");
-            allOptions[qData.c].classList.add("correct"); 
-            statusItem.classList.add("wrong");
-            statusItem.querySelector(".mark").innerText = "X";
-        }
-        
-        document.getElementById("explanation-text").innerText = qData.exp;
-        document.getElementById("explanation-box").style.display = "block";
-        document.getElementById("next-btn").style.display = "block";
-        document.getElementById("score-display").innerText = `점수: ${score}`;
-    }
-
-    function nextQuestion() {
-        currentIdx++;
-        if (currentIdx < questions.length) {
-            loadQuestion();
-        } else {
-            showResult();
-        }
-    }
-
-    function showResult() {
-        document.getElementById("quiz-screen").style.display = "none";
-        document.getElementById("result-screen").style.display = "block";
-        document.getElementById("final-score").innerText = score + "점";
-        document.getElementById("result-msg").innerText = score >= 80 ? "대단해요! 정보 마스터이시군요!" : "복습이 조금 더 필요할 것 같아요!";
-    }
-
-    window.onload = () => {
-        createSidebar();
-        loadQuestion();
-    };
-</script>
-
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
